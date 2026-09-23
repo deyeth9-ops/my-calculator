@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<title>เครื่องคิดเลข</title>
+<link rel="manifest" href='data:application/manifest+json,{"name":"เครื่องคิดเลข","short_name":"Calculator","start_url":".","display":"standalone","background_color":"%230f1115","theme_color":"%230f1115","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=\%27http://www.w3.org/2000/svg\%27 viewBox=\%270 0 100 100\%27%3E%3Crect width=\%27100\%27 height=\%27100\%27 rx=\%2220\%27 fill=\%27%23ff9f0a\%27/%3E%3Ctext x=\%2750\%27 y=\%2765\%27 font-size=\%2755\%27 text-anchor=\%27middle\%27 fill=\%27white\%27%3E%F0%9F%A7%AE%3C/text%3E%3C/svg%3E","sizes":"192x192","type":"image/svg+xml"}]}'>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#181b22; --key:#242833; --key-hover:#2e3341;
+    --op:#ff9f0a; --op-active:#ffb84d; --accent:#3a3f4b; --text:#fff; --muted:#9aa0ab;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg:#eef0f3; --panel:#fff; --key:#e4e7ec; --key-hover:#d8dce3;
+      --op:#ff9500; --op-active:#ffb04d; --accent:#d5d9e0; --text:#111; --muted:#666;
+    }
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex; align-items:center; justify-content:center;
+    padding:16px;
+  }
+  .calc{
+    width:100%; max-width:360px; background:var(--panel);
+    border-radius:24px; padding:20px; box-shadow:0 10px 40px rgba(0,0,0,0.3);
+  }
+  .display{
+    text-align:right; padding:24px 8px 16px; min-height:100px;
+    display:flex; flex-direction:column; justify-content:flex-end; overflow:hidden;
+  }
+  .display .prev{ color:var(--muted); font-size:18px; min-height:22px; word-break:break-all;}
+  .display .curr{ font-size:48px; font-weight:300; word-break:break-all; }
+  .grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:12px;
+  }
+  button{
+    border:none; border-radius:50%; aspect-ratio:1; font-size:22px;
+    background:var(--key); color:var(--text); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:background 0.12s, transform 0.06s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  button:active{ transform:scale(0.94); }
+  button:hover{ background:var(--key-hover); }
+  .op{ background:var(--op); color:#fff; font-weight:600; }
+  .op:hover{ background:var(--op-active); }
+  .op.active{ background:#fff; color:var(--op); }
+  .accent{ background:var(--accent); font-weight:600; }
+  .zero{ grid-column:span 2; border-radius:36px; justify-content:flex-start; padding-left:28px; aspect-ratio:auto; }
+</style>
+</head>
+<body>
+<div class="calc">
+  <div class="display">
+    <div class="prev" id="prev">&nbsp;</div>
+    <div class="curr" id="curr">0</div>
+  </div>
+  <div class="grid">
+    <button class="accent" onclick="clearAll()">AC</button>
+    <button class="accent" onclick="toggleSign()">+/-</button>
+    <button class="accent" onclick="percent()">%</button>
+    <button class="op" data-op="÷" onclick="chooseOp('÷')">÷</button>
+
+    <button onclick="inputDigit('7')">7</button>
+    <button onclick="inputDigit('8')">8</button>
+    <button onclick="inputDigit('9')">9</button>
+    <button class="op" data-op="×" onclick="chooseOp('×')">×</button>
+
+    <button onclick="inputDigit('4')">4</button>
+    <button onclick="inputDigit('5')">5</button>
+    <button onclick="inputDigit('6')">6</button>
+    <button class="op" data-op="−" onclick="chooseOp('−')">−</button>
+
+    <button onclick="inputDigit('1')">1</button>
+    <button onclick="inputDigit('2')">2</button>
+    <button onclick="inputDigit('3')">3</button>
+    <button class="op" data-op="+" onclick="chooseOp('+')">+</button>
+
+    <button class="zero" onclick="inputDigit('0')">0</button>
+    <button onclick="inputDot()">.</button>
+    <button class="op" onclick="equals()">=</button>
+  </div>
+</div>
+
+<script>
+let curr = '0';
+let prev = '';
+let op = null;
+let resetNext = false;
+
+const currEl = document.getElementById('curr');
+const prevEl = document.getElementById('prev');
+
+function updateDisplay(){
+  currEl.textContent = curr;
+  prevEl.textContent = prev ? `${prev} ${op}` : '\u00A0';
+  document.querySelectorAll('.op[data-op]').forEach(b=>{
+    b.classList.toggle('active', b.dataset.op === op && !resetNext);
+  });
+}
+
+function inputDigit(d){
+  if(resetNext){ curr = d; resetNext = false; }
+  else { curr = (curr === '0') ? d : curr + d; }
+  updateDisplay();
+}
+
+function inputDot(){
+  if(resetNext){ curr = '0.'; resetNext = false; updateDisplay(); return; }
+  if(!curr.includes('.')) curr += '.';
+  updateDisplay();
+}
+
+function clearAll(){
+  curr = '0'; prev = ''; op = null; resetNext = false;
+  updateDisplay();
+}
+
+function toggleSign(){
+  if(curr === '0') return;
+  curr = curr.startsWith('-') ? curr.slice(1) : '-' + curr;
+  updateDisplay();
+}
+
+function percent(){
+  curr = String(parseFloat(curr) / 100);
+  updateDisplay();
+}
+
+function chooseOp(nextOp){
+  if(op && !resetNext){
+    equals();
+  }
+  prev = curr;
+  op = nextOp;
+  resetNext = true;
+  updateDisplay();
+}
+
+function compute(a, b, operator){
+  a = parseFloat(a); b = parseFloat(b);
+  switch(operator){
+    case '+': return a + b;
+    case '−': return a - b;
+    case '×': return a * b;
+    case '÷': return b === 0 ? NaN : a / b;
+    default: return b;
+  }
+}
+
+function equals(){
+  if(op === null || prev === '') return;
+  let result = compute(prev, curr, op);
+  curr = Number.isNaN(result) ? 'Error' : String(parseFloat(result.toFixed(10)));
+  prev = '';
+  op = null;
+  resetNext = true;
+  updateDisplay();
+}
+
+document.addEventListener('keydown', (e)=>{
+  if(e.key >= '0' && e.key <= '9') inputDigit(e.key);
+  else if(e.key === '.') inputDot();
+  else if(e.key === '+') chooseOp('+');
+  else if(e.key === '-') chooseOp('−');
+  else if(e.key === '*') chooseOp('×');
+  else if(e.key === '/') { e.preventDefault(); chooseOp('÷'); }
+  else if(e.key === 'Enter' || e.key === '=') equals();
+  else if(e.key === 'Escape') clearAll();
+  else if(e.key === 'Backspace') { curr = curr.length>1 ? curr.slice(0,-1) : '0'; updateDisplay(); }
+});
+
+updateDisplay();
+</script>
+</body>
+</html>
