@@ -7,7 +7,7 @@
   "theme_color": "#0f1115",
   "icons": [
     {
-      "src": "icon.svg",
+      "src": "calculater.png",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any maskable"
